@@ -19,6 +19,7 @@ import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
 import org.opencv.core.Mat;
 import org.opencv.imgcodecs.Imgcodecs;
+import org.opencv.imgproc.Imgproc;
 
 import java.io.File;
 import java.util.Collections;
@@ -117,7 +118,8 @@ public class Tutorial1Activity extends CameraActivity implements CvCameraViewLis
     public Mat onCameraFrame(CvCameraViewFrame inputFrame) {
         Mat mat = inputFrame.rgba();
         if (!showPreview) {
-            this.matrixImg = mat; // take a pickture
+//            this.matrixImg = mat; // take a rgb picture
+            this.matrixImg = toGrayImg(mat); // take a gray-scale picture
             showPreview = true;
         }
         // to the camera view show
@@ -159,5 +161,19 @@ public class Tutorial1Activity extends CameraActivity implements CvCameraViewLis
                 blinkingView.setVisibility(View.GONE);
             }
         }, Const.BLINK_DELAY);
+    }
+
+    ///////////////////////// TESTING OPEN-CV FUNCTION AREA ///////////////////////////////////////
+
+    /**
+     * Convert matrix image to gray-scale image (black & white image)
+     * status: success
+     * @param mat matrix rgb img
+     * @return gray-scale matrix img
+     */
+    private Mat toGrayImg(Mat mat) {
+        Mat gray = new Mat();
+        Imgproc.cvtColor(mat, gray, Imgproc.COLOR_RGB2GRAY);
+        return gray;
     }
 }
