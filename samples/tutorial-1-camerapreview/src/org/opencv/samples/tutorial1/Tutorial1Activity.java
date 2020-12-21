@@ -8,6 +8,7 @@ import android.view.MotionEvent;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.Toast;
 
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.CameraActivity;
@@ -24,11 +25,14 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
+import static org.opencv.samples.tutorial1.Const.NOTE_FE_CAM_DELAY;
+
 public class Tutorial1Activity extends CameraActivity implements CvCameraViewListener2, View.OnTouchListener {
     private static final String TAG = "OCVSample::Activity";
 
     private CameraBridgeViewBase mOpenCvCameraView;
     private Mat matrixImg;
+    private View blinkingView;
     
     private final BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
         @Override
@@ -43,7 +47,7 @@ public class Tutorial1Activity extends CameraActivity implements CvCameraViewLis
             }
         }
     };
-    private boolean showPreview;
+    private boolean showPreview = true;
     private File folder;
 
     public Tutorial1Activity() {
@@ -61,12 +65,17 @@ public class Tutorial1Activity extends CameraActivity implements CvCameraViewLis
 
         setContentView(R.layout.tutorial1_surface_view);
 
+        blinkingView = findViewById(R.id.blinking_effect);
+        blinkingView.setOnTouchListener(this);
+
         mOpenCvCameraView = (CameraBridgeViewBase) findViewById(R.id.tutorial1_activity_java_surface_view);
 
         mOpenCvCameraView.setVisibility(SurfaceView.VISIBLE);
 
         mOpenCvCameraView.setCvCameraViewListener(this);
         folder = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
+        Toast.makeText(this, "Touch on screen to take a picture", Toast.LENGTH_LONG)
+                .show();
     }
 
     @Override
@@ -109,6 +118,7 @@ public class Tutorial1Activity extends CameraActivity implements CvCameraViewLis
         Mat mat = inputFrame.rgba();
         if (!showPreview) {
             this.matrixImg = mat; // take a pickture
+            showPreview = true;
         }
         // to the camera view show
         return inputFrame.rgba();
@@ -124,20 +134,30 @@ public class Tutorial1Activity extends CameraActivity implements CvCameraViewLis
      */
     @Override
     public boolean onTouch(View v, MotionEvent event) {
-        showPreview = !showPreview;
+        showPreview = !showPreview; // not set to const FALSE value because it can forever = false by error of cam
         Log.e(Const.TAG, "Touch showPreview: " + showPreview);
+        makeBlinking();
         new Handler().postDelayed(new Runnable() {
             @Override
             public void run() {
                 // save picture
-                if (!showPreview) {
+                if (matrixImg != null) {
                     String imgName = folder.getAbsolutePath()
                             + "/" + new Date().getTime() + ".png";
                     Log.e(Const.TAG, "imgName: " + imgName);
-                    Imgcodecs.imwrite(imgName, Tutorial1Activity.this.matrixImg);
+                    Imgcodecs.imwrite(imgName, matrixImg);
                 }
             }
-        }, 500);
+        }, NOTE_FE_CAM_DELAY);
         return false;
+    }
+    private void makeBlinking() {
+        blinkingView.setVisibility(View.VISIBLE);
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                blinkingView.setVisibility(View.GONE);
+            }
+        }, Const.BLINK_DELAY);
     }
 }
